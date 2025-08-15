@@ -1,0 +1,65 @@
+# .dockerignore - Arquivos a serem ignorados no build Docker
+
+# Binários
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Arquivos de desenvolvimento
+.air.toml
+tmp/
+*.tmp
+
+# Logs
+internal/logger/logs/
+*.log
+
+# Tests
+*_test.go
+testdata/
+coverage.out
+coverage.html
+
+# Documentation
+README.md
+MIGRATION_LOGGER.md
+docs/
+*.md
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*
+compose*
+
+# Environment (será copiado apenas o .env.example)
+.env
+
+# Dependencies (serão baixadas durante o build)
+vendor/
+
+# Development tools
+Makefile
+air

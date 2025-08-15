@@ -1,0 +1,602 @@
+openapi: 3.0.3
+info:
+  title: API de Salas e Mensagens
+  description: |
+    API RESTful para gerenciamento de salas de chat em tempo real com funcionalidades de mensagens, reações e WebSockets.
+    
+    Desenvolvido como parte da Semana Tech da Rocketseat.
+  version: 1.0.0
+  contact:
+    name: Rocketseat Education
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Servidor de desenvolvimento
+
+paths:
+  /api/rooms:
+    get:
+      summary: Listar todas as salas
+      description: Retorna uma lista com todas as salas disponíveis
+      tags:
+        - Salas
+      responses:
+        '200':
+          description: Lista de salas retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  theme: "Discussão sobre Go"
+                - id: "550e8400-e29b-41d4-a716-446655440001"
+                  theme: "React Best Practices"
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Criar uma nova sala
+      description: Cria uma nova sala de chat com o tema especificado
+      tags:
+        - Salas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+            example:
+              theme: "Discussão sobre Go"
+      responses:
+        '200':
+          description: Sala criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRoomResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{room_id}:
+    get:
+      summary: Obter uma sala específica
+      description: Retorna os detalhes de uma sala específica
+      tags:
+        - Salas
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          description: ID único da sala
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Dados da sala retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                theme: "Discussão sobre Go"
+        '400':
+          description: ID da sala inválido ou sala não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{room_id}/messages:
+    get:
+      summary: Listar mensagens de uma sala
+      description: Retorna todas as mensagens de uma sala específica
+      tags:
+        - Mensagens
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          description: ID único da sala
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Lista de mensagens retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440010"
+                  room_id: "550e8400-e29b-41d4-a716-446655440000"
+                  message: "Olá, pessoal!"
+                  reaction_count: 5
+                  answered: false
+                - id: "550e8400-e29b-41d4-a716-446655440011"
+                  room_id: "550e8400-e29b-41d4-a716-446655440000"
+                  message: "Como vocês estão?"
+                  reaction_count: 2
+                  answered: true
+        '400':
+          description: ID da sala inválido ou sala não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Criar uma nova mensagem
+      description: Cria uma nova mensagem em uma sala específica
+      tags:
+        - Mensagens
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          description: ID único da sala
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMessageRequest'
+            example:
+              message: "Esta é uma mensagem de teste"
+      responses:
+        '200':
+          description: Mensagem criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateMessageResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440010"
+        '400':
+          description: Dados inválidos ou sala não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{room_id}/messages/{message_id}:
+    get:
+      summary: Obter uma mensagem específica
+      description: Retorna os detalhes de uma mensagem específica
+      tags:
+        - Mensagens
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          description: ID único da sala
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: message_id
+          in: path
+          required: true
+          description: ID único da mensagem
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440010"
+      responses:
+        '200':
+          description: Dados da mensagem retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440010"
+                room_id: "550e8400-e29b-41d4-a716-446655440000"
+                message: "Esta é uma mensagem de teste"
+                reaction_count: 5
+                answered: false
+        '400':
+          description: ID inválido ou recurso não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{room_id}/messages/{message_id}/react:
+    patch:
+      summary: Reagir a uma mensagem
+      description: Adiciona uma reação (like) a uma mensagem específica
+      tags:
+        - Reações
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          description: ID único da sala
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: message_id
+          in: path
+          required: true
+          description: ID único da mensagem
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440010"
+      responses:
+        '200':
+          description: Reação adicionada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReactionResponse'
+              example:
+                count: 6
+        '400':
+          description: ID inválido ou recurso não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Remover reação de uma mensagem
+      description: Remove uma reação (like) de uma mensagem específica
+      tags:
+        - Reações
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          description: ID único da sala
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: message_id
+          in: path
+          required: true
+          description: ID único da mensagem
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440010"
+      responses:
+        '200':
+          description: Reação removida com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReactionResponse'
+              example:
+                count: 5
+        '400':
+          description: ID inválido ou recurso não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{room_id}/messages/{message_id}/answer:
+    patch:
+      summary: Marcar mensagem como respondida
+      description: Marca uma mensagem específica como respondida
+      tags:
+        - Mensagens
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          description: ID único da sala
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: message_id
+          in: path
+          required: true
+          description: ID único da mensagem
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440010"
+      responses:
+        '200':
+          description: Mensagem marcada como respondida com sucesso
+        '400':
+          description: ID inválido ou recurso não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /subscribe/{room_id}:
+    get:
+      summary: Conectar ao WebSocket
+      description: |
+        Estabelece uma conexão WebSocket para receber atualizações em tempo real de uma sala específica.
+        
+        **Eventos enviados:**
+        - `message_created`: Nova mensagem criada
+        - `message_reaction_increased`: Reação adicionada
+        - `message_reaction_decreased`: Reação removida
+        - `message_answered`: Mensagem marcada como respondida
+      tags:
+        - WebSocket
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          description: ID único da sala
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '101':
+          description: Conexão WebSocket estabelecida
+        '400':
+          description: ID da sala inválido ou falha ao atualizar conexão
+
+components:
+  schemas:
+    Room:
+      type: object
+      required:
+        - id
+        - theme
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único da sala
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        theme:
+          type: string
+          description: Tema ou tópico da sala
+          example: "Discussão sobre Go"
+
+    Message:
+      type: object
+      required:
+        - id
+        - room_id
+        - message
+        - reaction_count
+        - answered
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único da mensagem
+          example: "550e8400-e29b-41d4-a716-446655440010"
+        room_id:
+          type: string
+          format: uuid
+          description: Identificador da sala à qual a mensagem pertence
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        message:
+          type: string
+          description: Conteúdo da mensagem
+          example: "Esta é uma mensagem de teste"
+        reaction_count:
+          type: integer
+          format: int64
+          description: Número total de reações (likes) na mensagem
+          example: 5
+        answered:
+          type: boolean
+          description: Indica se a mensagem foi marcada como respondida
+          example: false
+
+    CreateRoomRequest:
+      type: object
+      required:
+        - theme
+      properties:
+        theme:
+          type: string
+          description: Tema ou tópico da sala
+          example: "Discussão sobre Go"
+
+    CreateRoomResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único da sala criada
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    CreateMessageRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Conteúdo da mensagem
+          example: "Esta é uma mensagem de teste"
+
+    CreateMessageResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único da mensagem criada
+          example: "550e8400-e29b-41d4-a716-446655440010"
+
+    ReactionResponse:
+      type: object
+      required:
+        - count
+      properties:
+        count:
+          type: integer
+          format: int64
+          description: Número atual de reações na mensagem
+          example: 6
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Descrição do erro
+          example: "invalid room id"
+
+    WebSocketMessage:
+      type: object
+      required:
+        - kind
+        - value
+      properties:
+        kind:
+          type: string
+          enum:
+            - message_created
+            - message_reaction_increased
+            - message_reaction_decreased
+            - message_answered
+          description: Tipo do evento WebSocket
+          example: "message_created"
+        value:
+          oneOf:
+            - $ref: '#/components/schemas/MessageCreatedEvent'
+            - $ref: '#/components/schemas/MessageReactionEvent'
+            - $ref: '#/components/schemas/MessageAnsweredEvent'
+          description: Dados do evento
+
+    MessageCreatedEvent:
+      type: object
+      required:
+        - id
+        - message
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID da mensagem criada
+          example: "550e8400-e29b-41d4-a716-446655440010"
+        message:
+          type: string
+          description: Conteúdo da mensagem
+          example: "Nova mensagem criada"
+
+    MessageReactionEvent:
+      type: object
+      required:
+        - id
+        - count
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID da mensagem
+          example: "550e8400-e29b-41d4-a716-446655440010"
+        count:
+          type: integer
+          format: int64
+          description: Novo número de reações
+          example: 6
+
+    MessageAnsweredEvent:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID da mensagem marcada como respondida
+          example: "550e8400-e29b-41d4-a716-446655440010"
+
+tags:
+  - name: Salas
+    description: Operações relacionadas ao gerenciamento de salas de chat
+  - name: Mensagens
+    description: Operações relacionadas ao gerenciamento de mensagens
+  - name: Reações
+    description: Operações relacionadas às reações (likes) das mensagens
+  - name: WebSocket
+    description: Conexão em tempo real via WebSocket

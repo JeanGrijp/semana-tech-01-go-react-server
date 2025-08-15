@@ -3,9 +3,9 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 
+	"github.com/rocketseat-education/semana-tech-go-react-server/internal/logger"
 	"github.com/rocketseat-education/semana-tech-go-react-server/internal/store/pgstore"
 
 	"github.com/go-chi/chi/v5"
@@ -31,7 +31,7 @@ func (h apiHandler) readRoom(
 			return pgstore.Room{}, "", uuid.UUID{}, false
 		}
 
-		slog.Error("failed to get room", "error", err)
+		logger.Default.Error(r.Context(), "failed to get room", "error", err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return pgstore.Room{}, "", uuid.UUID{}, false
 	}
